@@ -1,3 +1,6 @@
+#include <stddef.h>
+#include <stdint.h>
+#include <unistd.h>
 #include "malloc.h"
 
 /**
@@ -34,6 +37,6 @@ void *naive_malloc(size_t size)
 	sbrk(total_request_size);
 
 	/* return pointer to user data (not the header) */
-	return ((size_t)sbrk(0) - size);
+	return (void *)((char *)sbrk(0) - (ptrdiff_t)size);
 	/* Profit */
 }

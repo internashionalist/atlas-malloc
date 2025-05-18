@@ -70,7 +70,7 @@ Build the naive malloc that is presented in the concept page.
 - File: `naive_malloc.c`, `malloc.h`
 #
 #### 1. malloc
-Write you own `malloc` function that allocates space in the heap
+Write your own `malloc` function that allocates space in the heap
 - Prototype: `void *_malloc(size_t size);`
 - Where `size` is the size needed to be allocated for the user
 - Your function must return a pointer to the allocated memory that is suitably aligned for any kind of variable
@@ -80,7 +80,7 @@ Write you own `malloc` function that allocates space in the heap
 - File: `malloc.c`, `malloc.h`
 #
 #### 2. free
-Write you own `free` function that frees a memory space
+Write your own `free` function that frees a memory space
 - Prototype: `void _free(void *ptr);`
 - Where `ptr` is a pointer to the memory space to be freed
 #
@@ -90,7 +90,7 @@ Write you own `free` function that frees a memory space
 #
 ## Advanced
 #### 3. calloc
-Write you own `malloc` function that allocates space in the heap
+Write your own `malloc` function that allocates space in the heap
 - Prototype: `void *_calloc(size_t nmemb, size_t size);`
 - Where `nmemb` is the number of elements in the array, and `size` is the size of each element
 - Your function must return a pointer to the allocated memory that is suitably aligned for any kind of variable
@@ -100,7 +100,7 @@ Write you own `malloc` function that allocates space in the heap
 - File: `calloc.c`, `free.c`, `malloc.c`, `malloc.h`
 #
 #### 4. realloc
-Write you own `malloc` function that allocates space in the heap
+Write your own `malloc` function that allocates space in the heap
 - Prototype: `void *_realloc(void *ptr, size_t size);`
 - Where `ptr` is a pointer to the memory space to resize, and `size` is the new size needed to be allocated for the user
 - Your function must return a pointer to the new allocated memory that is suitably aligned for any kind of variable
