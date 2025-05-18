@@ -31,7 +31,7 @@ void *naive_malloc(size_t size)
 	bytes_from_page_start = page_size - bytes_to_page_end;
 	bytes_for_alignment = bytes_from_page_start % alignof(max_align_t);
 	if (bytes_for_alignment)
-		sbrk(bytes_for_alignment);
+		sbrk(alignof(max_align_t) - bytes_for_alignment);
 
 	/* reserve total request size sbrk(total_request_size) */
 	sbrk(total_request_size);
