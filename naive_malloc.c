@@ -16,7 +16,7 @@ void *naive_malloc(size_t size)
 	size_t total_request_size = header_size + size; /* total memory needed */
 	size_t bytes_to_page_end; /* distance to end of page from current break */
 	size_t current_break = (size_t)sbrk(0);  /* current location on page NOTE: possibly use uintptr_t instead of size_t */
-	size_t page_start = current_break & ~(page_size - 1); /* memory addr of page start */
+	// size_t page_start = current_break & ~(page_size - 1); /* memory addr of page start */
 	size_t bytes_for_alignment; /* bytes needed to be word-aligned */
 	size_t bytes_from_page_start; /* bytes away from page start */
 
@@ -37,6 +37,6 @@ void *naive_malloc(size_t size)
 	sbrk(total_request_size);
 
 	/* return pointer to user data (not the header) */
-	return (void *)((char *)sbrk(0) - (ptrdiff_t)size);
+	return ((void *)((char *)sbrk(0) - (ptrdiff_t)size));
 	/* Profit */
 }
