@@ -34,6 +34,6 @@ void *naive_malloc(size_t size)
 	sbrk(total_request_size);
 
 	/* return pointer to user data (not the header) */
-	return (sbrk(0) - size);
+	return ((size_t)sbrk(0) - size);
 	/* Profit */
 }
