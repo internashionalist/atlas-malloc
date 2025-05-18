@@ -29,7 +29,7 @@ void *naive_malloc(size_t size)
 
 	/* align with required padding using sbrk(number of padding bytes) */
 	bytes_from_page_start = page_size - bytes_to_page_end;
-	bytes_for_alignment = bytes_from_page_start % sizeof(size_t);
+	bytes_for_alignment = bytes_from_page_start % alignof(max_align_t);
 	if (bytes_for_alignment)
 		sbrk(bytes_for_alignment);
 
