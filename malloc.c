@@ -9,7 +9,7 @@
  *
  * Return: pointer to suitably aligned allocated memory
  */
-void *naive_malloc(size_t size)
+void *_malloc(size_t size)
 {
 	size_t page_size = sysconf(_SC_PAGESIZE);		/* system page size */
 	size_t header_size = sizeof(size_t);			/* store chunk header */
