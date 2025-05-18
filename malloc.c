@@ -6,7 +6,7 @@
 /**
  * _malloc - Allocates enough memory to store chunk header and sz requested
  * @size: size needed to be allocated for the user
- * 
+ *
  * This function imitates the behavior of malloc() by allocating memory
  * using sbrk() system call. It reserves a chunk of memory that is
  * aligned to the system page size and also aligned to the size of
