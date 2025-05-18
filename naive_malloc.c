@@ -8,19 +8,32 @@
  */
 void *naive_malloc(size_t size)
 {
-	size_t page_size = sysconf(_SC_PAGESIZE);
-	size_t header_size = 16; // or sizeof(long double)?;
-	size_t total_request_size = header_size + size;
-	size_t current_program_break = sbrk(0);
+	size_t page_size = sysconf(_SC_PAGESIZE); /* system page size */
+	size_t header_size = sizeof(long double); /* largest datatype */
+	size_t total_request_size = header_size + size; /* total memory needed */
+	size_t bytes_to_page_end; /* distance to end of page from current break */
+	size_t current_break = (size_t)sbrk(0);  /* current location on page NOTE: possibly use uintptr_t instead of size_t */
+	size_t page_start = current_break & ~(page_size - 1); /* memory addr of page start */
+	size_t bytes_for_alignment; /* bytes needed to be word-aligned */
+	size_t bytes_from_page_start; /* bytes away from page start */
 
-	if (page_size - (current_program_break % page_size) < 0)
+	bytes_to_page_end = current_break - page_start;
+	if ( bytes_to_page_end < total_request_size) /*add enough padding to get to a new page */
 	{
-		//add enough padding to get to a new page
+		sbrk(bytes_to_page_end);
+		current_break = (size_t)sbrk(0);
 	}
 
-	//align with required padding using sbrk(number of padding bytes)
-	//reserve total request size sbrk(total_request_size)
-	//return pointer to user data (not the header)
+	/* align with required padding using sbrk(number of padding bytes) */
+	bytes_from_page_start = page_size - bytes_to_page_end;
+	bytes_for_alignment = bytes_from_page_start % sizeof(long double);
+	if (bytes_for_alignment)
+		sbrk(bytes_for_alignment);
 
-	//monetize with a memecoin
+	/* reserve total request size sbrk(total_request_size) */
+	sbrk(total_request_size);
+
+	/* return pointer to user data (not the header) */
+	return (sbrk(0) - size);
+	/* Profit */
 }
