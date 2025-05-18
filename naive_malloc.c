@@ -20,8 +20,8 @@ void *naive_malloc(size_t size)
 	size_t bytes_for_alignment; /* bytes needed to be word-aligned */
 	size_t bytes_from_page_start; /* bytes away from page start */
 
-	bytes_to_page_end = current_break - page_start;
-	if ( bytes_to_page_end < total_request_size) /*add enough padding to get to a new page */
+	bytes_to_page_end = page_size - current_break;
+	if (bytes_to_page_end < total_request_size) /*add enough padding to get to a new page */
 	{
 		sbrk(bytes_to_page_end);
 		current_break = (size_t)sbrk(0);
