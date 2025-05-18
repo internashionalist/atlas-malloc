@@ -12,7 +12,7 @@
 void *naive_malloc(size_t size)
 {
 	size_t page_size = sysconf(_SC_PAGESIZE); /* system page size */
-	size_t header_size = sizeof(long double); /* largest datatype */
+	size_t header_size = sizeof(size_t);      /* store chunk header */
 	size_t total_request_size = header_size + size; /* total memory needed */
 	size_t bytes_to_page_end; /* distance to end of page from current break */
 	size_t current_break = (size_t)sbrk(0);  /* current location on page NOTE: possibly use uintptr_t instead of size_t */
@@ -29,7 +29,7 @@ void *naive_malloc(size_t size)
 
 	/* align with required padding using sbrk(number of padding bytes) */
 	bytes_from_page_start = page_size - bytes_to_page_end;
-	bytes_for_alignment = bytes_from_page_start % sizeof(long double);
+	bytes_for_alignment = bytes_from_page_start % sizeof(size_t);
 	if (bytes_for_alignment)
 		sbrk(bytes_for_alignment);
 
