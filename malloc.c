@@ -4,8 +4,13 @@
 #include "malloc.h"
 
 /**
- * naive_malloc - Allocates enough memory to store chunk header and sz requested
+ * _malloc - Allocates enough memory to store chunk header and sz requested
  * @size: size needed to be allocated for the user
+ *
+ * This function imitates the behavior of malloc() by allocating memory
+ * using sbrk() system call. It reserves a chunk of memory that is
+ * aligned to the system page size and also aligned to the size of
+ * max_align_t.
  *
  * Return: pointer to suitably aligned allocated memory
  */
@@ -14,14 +19,17 @@ void *_malloc(size_t size)
 	size_t page_size = sysconf(_SC_PAGESIZE);		/* system page size */
 	size_t header_size = sizeof(size_t);			/* store chunk header */
 	size_t total_request_size = header_size + size; /* total memory needed */
-	size_t bytes_to_page_end;						/* distance to end of page from current break */
-	size_t current_break = (size_t)sbrk(0);			/* current location on page NOTE: possibly use uintptr_t instead of size_t */
-	// size_t page_start = current_break & ~(page_size - 1); /* memory addr of page start */
+	/* distance to end of page from current break */
+	size_t bytes_to_page_end;
+	size_t current_break = (size_t)sbrk(0);			/* current location on page */
+	/* mem addr of page start */
+	/* size_t page_start = current_break & ~(page_size - 1); */
 	size_t bytes_for_alignment;	  /* bytes needed to be word-aligned */
 	size_t bytes_from_page_start; /* bytes away from page start */
 
 	bytes_to_page_end = page_size - current_break;
-	if (bytes_to_page_end < total_request_size) /*add enough padding to get to a new page */
+	/*add enough padding to get to a new page */
+	if (bytes_to_page_end < total_request_size)
 	{
 		sbrk(bytes_to_page_end);
 		current_break = (size_t)sbrk(0);
