@@ -10,6 +10,9 @@
  */
 void _free(void *ptr)
 {
+	if (!ptr) /* check if pointer is NULL */
+		return;
+
 	block_header_t *blk = (block_header_t *)ptr - 1; /* get the header */
 
 	blk->free = 1; /* mark the block as free */
