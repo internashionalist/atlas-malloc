@@ -4,7 +4,8 @@
  * _free - frees a memory space
  * @ptr: pointer to the memory space to be freed
  *
- * T
+ * This function frees a memory space by marking the block as free
+ * and merging it with adjacent free blocks if possible.
  *
  * Return: void
  */
