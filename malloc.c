@@ -1,19 +1,36 @@
-#include <stddef.h>
-#include <stdint.h>
-#include <unistd.h>
-#include "malloc.h"
 #include <stdalign.h> /* alignof(max_align_t) */
+#include <stddef.h>	  /* size_t */
+#include <stdint.h>
+#include <unistd.h> /* sbrk */
+#include "malloc.h"
 
-/* a little free list block header */
-typedef struct block_header
+/* head of the block list */
+static block_header_t *g_head;
+
+/**
+ * extend_heap - extend the heap by a given size
+ * @size: size to extend the heap by
+ *
+ * This function extends the heap by a given size using sbrk.
+ *
+ * Return: pointer to the new block header
+ */
+static block_header_t *extend_heap(size_t size)
 {
-    size_t size;				/* payload size (bytes) */
-    int free;					/* 1 = available, 0 = in use */
-    struct block_header *next;	/* singly‑linked list */
-} block_header_t;
+	size_t hdr = sizeof(block_header_t); /* size of the header */
+	void *raw = sbrk(hdr + size);		 /* get memory from kernel */
 
-/* head of the global block list "first‑fit order" */
-static block_header_t *g_head = NULL;
+	block_header_t *b = (block_header_t *)raw; /* cast */
+
+	b->size = size;
+	b->free = 0;
+	b->next = g_head; /* insert at the head of the list */
+	g_head = b;
+	return (b);
+}
+
+/* round up to multiple of a... a squared? */
+#define ROUNDUP(n, a) (((n) + (a) - 1) & ~((a) - 1))
 
 /**
  * _malloc - allocates enough memory to store chunk header and size requested
@@ -28,59 +45,40 @@ static block_header_t *g_head = NULL;
  */
 void *_malloc(size_t size)
 {
-	/* round size up */
-	size = (size + alignof(max_align_t) - 1) & ~(alignof(max_align_t) - 1);
+	/* round up to the next multiple */
+	size = ROUNDUP(size, alignof(max_align_t));
 
-	/* first‑fit: reuse the first sufficiently large free block */
-	for (block_header_t *blk = g_head; blk; blk = blk->next)
+	/* check if size is too large */
+	for (block_header_t *b = g_head; b; b = b->next)
 	{
-		if (blk->free && blk->size >= size)
+		if (b->free && b->size >= size) /* if free block found */
 		{
-			blk->free = 0;
-			return (void *)(blk + 1);		/* payload starts after header */
+			if (b->size > size + sizeof(block_header_t)) /* block too big */
+			{
+				/* split the block */
+				block_header_t *new_block = (block_header_t *)((char *)(b + 1) + size);
+
+				new_block->size = b->size - size - sizeof(block_header_t);
+				new_block->free = 1;
+				new_block->next = b->next;
+
+				b->size = size;
+				b->next = new_block;
+			}
+			b->free = 0;			  /* mark block as being used */
+			return ((void *)(b + 1)); /* payload starts here */
+		}
+		/* if the block is exactly the size we need */
+		else if (b->free && b->size == size)
+		{
+			b->free = 0;
+			return ((void *)(b + 1)); /* similarly, payload starts here */
 		}
 	}
 
-	size_t page_size = sysconf(_SC_PAGESIZE);		/* system page size */
-	size_t header_size = sizeof(block_header_t);	/* struct header */
-	size_t total_request_size = header_size + size; /* total memory needed */
-	/* distance to end of page from current break */
-	size_t bytes_to_page_end;
-	size_t current_break = (size_t)sbrk(0);		/* current location on page */
-	/* mem addr of page start */
-	/* size_t page_start = current_break & ~(page_size - 1); */
-	size_t bytes_for_alignment;			/* bytes needed to be word-aligned */
-	size_t bytes_from_page_start;		/* bytes away from page start */
+	/* nothing free — ask for more memory */
+	block_header_t *blk = extend_heap(size);
 
-	bytes_to_page_end = page_size - current_break;
-
-	/*add enough padding to get to a new page */
-	if (bytes_to_page_end < total_request_size)
-	{
-		sbrk(bytes_to_page_end);
-		current_break = (size_t)sbrk(0);
-	}
-
-	/* align with required padding using sbrk(number of padding bytes) */
-	bytes_from_page_start = page_size - bytes_to_page_end;
-	bytes_for_alignment = bytes_from_page_start % alignof(max_align_t);
-	if (bytes_for_alignment)
-		sbrk(alignof(max_align_t) - bytes_for_alignment);
-
-	/* reserve total request size sbrk(total_request_size) */
-	void *block_start = sbrk(total_request_size);
-	if (block_start == (void *)-1)
-		return NULL;
-
-	/* set up header */
-	block_header_t *new_block = (block_header_t *)block_start;
-	new_block->size = size;
-	new_block->free = 0;
-	new_block->next = g_head; /* prepend for quick first‑fit */
-	g_head = new_block;
-
-	/* return pointer to user data (not the header) */
-	return (void *)(new_block + 1);
-
-	/* Profit */
+	/* PROFIT */
+	return (blk ? (void *)(blk + 1) : NULL);
 }
