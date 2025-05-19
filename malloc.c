@@ -7,16 +7,16 @@
 /* a little free list block header */
 typedef struct block_header
 {
-    size_t size;				/* payload size (bytes)			*/
-    int    free;				/* 1 = available, 0 = in use	*/
-    struct block_header *next;	/* singly‑linked list			*/
+    size_t size;				/* payload size (bytes) */
+    int free;					/* 1 = available, 0 = in use */
+    struct block_header *next;	/* singly‑linked list */
 } block_header_t;
 
 /* head of the global block list "first‑fit order" */
 static block_header_t *g_head = NULL;
 
 /**
- * _malloc - Allocates enough memory to store chunk header and sz requested
+ * _malloc - allocates enough memory to store chunk header and size requested
  * @size: size needed to be allocated for the user
  *
  * This function imitates the behavior of malloc() by allocating memory
@@ -24,7 +24,7 @@ static block_header_t *g_head = NULL;
  * aligned to the system page size and also aligned to the size of
  * max_align_t.
  *
- * Return: pointer to suitably aligned allocated memory
+ * Return: pointer to aligned allocated memory
  */
 void *_malloc(size_t size)
 {
