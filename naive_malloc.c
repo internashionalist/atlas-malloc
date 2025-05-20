@@ -45,7 +45,7 @@ void *naive_malloc(size_t size)
 	}
 
     /* carve next block */
-	prev_end = (char *)region_base + region_used; /* gives end of region */
+	prev_end = (char *)region_base + region_used;	/* gives end of region */
 	region_used += region_size;						/* update used size */
 
 	*(size_t *)prev_end = region_size;			/* store block size header */
