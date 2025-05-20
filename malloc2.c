@@ -71,7 +71,7 @@ void *_malloc(size_t size)
 	if (block_start == (void *)-1)
 		return NULL;
 
-	/* Set up header */
+	/* set up header */
 	block_header_t *new_block = (block_header_t *)block_start;
 	new_block->size = size;
 	new_block->free = 0;
@@ -80,5 +80,6 @@ void *_malloc(size_t size)
 
 	/* return pointer to user data (not the header) */
 	return (void *)(new_block + 1);
+
 	/* Profit */
 }
