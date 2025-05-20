@@ -1,49 +1,50 @@
+#include <stddef.h>   /* for size_t */
+#include <unistd.h>   /* for sbrk, sysconf */
 #include "malloc.h"
 
 /**
- * naive_malloc -	allocates enough memory to store chunk header
- *					and size requested
- * @size:			size needed to be allocated for the user
+ * naive_malloc -	allocates memory in heap using sbrk
+ * @size:			size needed to be allocated
  *
  * This function imitates the behavior of malloc() by allocating memory
- * using sbrk.
+ * using sbrk. A chunk of memory is reserved that is aligned to the
+ * system page size.
  *
- * Return:			pointer to suitably aligned allocated memory
+ * Return: pointer to payload, otherwise NULL
  */
 void *naive_malloc(size_t size)
 {
-	size_t page_size = sysconf(_SC_PAGESIZE); /* system page size */
-	size_t header_size = sizeof(size_t);      /* store chunk header */
-	size_t total_request_size = header_size + size; /* total memory needed */
-	size_t bytes_to_page_end; /* distance to end of page from current break */
-	size_t current_break = (size_t)sbrk(0);  /* current location on page */
-	/* NOTE: possibly use uintptr_t instead of size_t */
-	/* UNUSED: size_t page_start = current_break & ~(page_size - 1); */
-	/* memory addr of page start */
-	size_t bytes_for_alignment; /* bytes needed to be word-aligned */
-	size_t bytes_from_page_start; /* bytes away from page start */
+	static void		*heap_end;		/* end of allocated region */
+	void			*prev_end;		/* previous end of allocated region */
+	void			*ptr;			/* pointer to payload */
+	size_t			aligned_size;	/* aligned size */
+	long			pg;				/* system page size */
 
-	bytes_to_page_end = page_size - current_break;
-	/*add enough padding to get to a new page */
-	if (bytes_to_page_end < total_request_size)
-	{
-		sbrk(bytes_to_page_end);
-		current_break = (size_t)sbrk(0);
-	}
+	if (size == 0)					/* check for zero size */
+		return (NULL);
 
-	/* align with required padding using sbrk(number of padding bytes) */
-	bytes_from_page_start = page_size - bytes_to_page_end;
-	bytes_for_alignment = bytes_from_page_start % alignof(max_align_t);
+	pg = sysconf(_SC_PAGESIZE);		/* figure out page size */
+	if (pg <= 0)					/* if error, use default */
+		pg = 4096;
 
-	/* add enough padding to get to a new page */
-	if (bytes_for_alignment)
-		sbrk(alignof(max_align_t) - bytes_for_alignment);
+    /* round up requested + header to a page boundary */
+	aligned_size = (size + sizeof(size_t) + pg - 1) & ~(pg - 1);
 
-	/* reserve total request size sbrk(total_request_size) */
-	sbrk(total_request_size);
+	if (heap_end == NULL)			/* if first call */
+		heap_end = sbrk(0);			/* get current break */
 
-	/* return pointer to user data (not the header) */
-	return ((void *)((char *)sbrk(0) - (ptrdiff_t)size));
+	prev_end = heap_end;			/* get previous end of heap */
 
-	/* Profit */
+    /* extend the heap */
+	if (sbrk(aligned_size) == (void *)-1)		/* if sbrk fails */
+		return (NULL);
+	heap_end = (char *)heap_end + aligned_size;	/* update end of heap */
+
+    /* store block size header */
+	*(size_t *)prev_end = aligned_size;			/* store size in header */
+
+    /* return payload past header */
+	ptr = (char *)prev_end + sizeof(size_t);
+
+	return (ptr);					/* return pointer to payload */
 }
