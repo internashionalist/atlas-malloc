@@ -1,6 +1,12 @@
-#include "malloc.h"
 #include <stddef.h>   /* for size_t */
 #include <unistd.h>   /* for sbrk, sysconf */
+#include "malloc.h"
+
+#define DEFAULT_PAGE 4096
+
+static void   *region_base;		/* start of reserved bump region */
+static size_t  region_size;		/* size of each block (header+payload) */
+static size_t  region_used;		/* bytes already handed out */
 
 /**
  * naive_malloc -	allocates memory in heap using sbrk
@@ -14,7 +20,6 @@
  */
 void *naive_malloc(size_t size)
 {
-	static void		*heap_end;		/* end of allocated region */
 	void			*prev_end;		/* previous end of allocated region */
 	void			*ptr;			/* pointer to payload */
 	size_t			aligned_size;	/* aligned size */
@@ -25,23 +30,25 @@ void *naive_malloc(size_t size)
 
 	pg = sysconf(_SC_PAGESIZE);		/* figure out page size */
 	if (pg <= 0)					/* if error, use default */
-		pg = 4096;
+		pg = DEFAULT_PAGE;
 
     /* round up requested + header to a page boundary */
 	aligned_size = (size + sizeof(size_t) + pg - 1) & ~(pg - 1);
 
-	if (heap_end == NULL)			/* if first call */
-		heap_end = sbrk(0);			/* get current break */
+    /* on first call, reserve the bump region */
+	if (region_base == NULL)
+	{
+		region_size = aligned_size;	/* block size */
+		region_base = sbrk(0);		/* current break */
+		if (sbrk(region_size) == (void *)-1)	/* if sbrk fails */
+			return (NULL);
+    }
 
-	prev_end = heap_end;			/* get previous end of heap */
+    /* carve next block */
+	prev_end = (char *)region_base + region_used; /* gives end of region */
+	region_used += region_size;						/* update used size */
 
-    /* extend the heap */
-	if (sbrk(aligned_size) == (void *)-1)		/* if sbrk fails */
-		return (NULL);
-	heap_end = (char *)heap_end + aligned_size;	/* update end of heap */
-
-    /* store block size header */
-	*(size_t *)prev_end = aligned_size;			/* store size in header */
+	*(size_t *)prev_end = region_size;			/* store block size header */
 
     /* return payload past header */
 	ptr = (char *)prev_end + sizeof(size_t);
