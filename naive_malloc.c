@@ -46,7 +46,7 @@ void *naive_malloc(size_t size)
 		region_base = sbrk(0);                     /* current break */
 		if (sbrk(region_reserved) == (void *)-1)   /* extend by page */
 			return (NULL);
-    }
+	}
 
     /* carve next block */
 	prev_end = (char *)region_base + region_used;	/* gives end of region */
