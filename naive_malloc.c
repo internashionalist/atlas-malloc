@@ -1,9 +1,8 @@
 #include <stddef.h>   /* for size_t */
 #include <unistd.h>   /* for sbrk, sysconf */
-#include <stdalign.h>  /* for alignof, max_align_t */
 #include "malloc.h"
 
-# define ALIGNMENT sizeof(max_align_t)	/* alignment boundary */
+# define ALIGNMENT sizeof(size_t)    /* alignment boundary */
 
 static void   *region_base;		/* start of reserved bump region */
 static size_t  region_size;		/* size of each block (header+payload) */
