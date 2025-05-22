@@ -22,7 +22,7 @@ static size_t  region_reserved;  /* total reserved region size */
 void *naive_malloc(size_t size)
 {
 	void			*prev_end;		/* previous end of allocated region */
-	void			*payload;		/* pointer to payload */
+	void			*ptr;		/* pointer to payload */
 	size_t			aligned_size;	/* aligned size of requested block */
 
 	if (size == 0)					/* check for zero size */
@@ -55,8 +55,8 @@ void *naive_malloc(size_t size)
 	*(size_t *)prev_end = region_size;			/* store block size header */
 
     /* set payload pointer to first byte after the header */
-	payload = (char *)prev_end + sizeof(size_t);
+	ptr = (char *)prev_end + sizeof(size_t);
 
 	/* return pointer to payload */
-	return (payload);
+	return (ptr);
 }
