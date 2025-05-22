@@ -7,6 +7,7 @@
 static void   *region_base;		/* start of reserved bump region */
 static size_t  region_size;		/* size of each block (header+payload) */
 static size_t  region_used;		/* bytes already handed out */
+static size_t  region_reserved;  /* total reserved region size */
 
 /**
  * naive_malloc -	allocates memory in heap using sbrk
@@ -21,8 +22,8 @@ static size_t  region_used;		/* bytes already handed out */
 void *naive_malloc(size_t size)
 {
 	void			*prev_end;		/* previous end of allocated region */
-	void			*ptr;			/* pointer to payload */
-	size_t			aligned_size;	/* aligned size */
+	void			*payload;		/* pointer to payload */
+	size_t			aligned_size;	/* aligned size of requested block */
 
 	if (size == 0)					/* check for zero size */
 		return (NULL);
@@ -32,13 +33,16 @@ void *naive_malloc(size_t size)
 	/* sync with system page size */
 	region_size = aligned_size;
 
+	/* use page size if region size too small */
+	long page = sysconf(_SC_PAGESIZE);
+
+	if (page <= 0)
+		page = 4096;
+	region_reserved = page;
+
     /* on first call, reserve the bump region */
 	if (region_base == NULL)
-	{
-		region_base = sbrk(0);		/* current break */
-		if (sbrk(region_size) == (void *)-1)	/* if sbrk fails */
-			return (NULL);
-	}
+		region_base = sbrk(0);						/* current break */
 
     /* carve next block */
 	prev_end = (char *)region_base + region_used;	/* gives end of region */
@@ -46,8 +50,9 @@ void *naive_malloc(size_t size)
 
 	*(size_t *)prev_end = region_size;			/* store block size header */
 
-    /* return payload past header */
-	ptr = (char *)prev_end + sizeof(size_t);
+    /* set payload pointer to first byte after the header */
+	payload = (char *)prev_end + sizeof(size_t);
 
-	return (ptr);					/* return pointer to payload */
+	/* return pointer to payload */
+	return (payload);
 }
