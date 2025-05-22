@@ -1,8 +1,9 @@
 #include <stddef.h>   /* for size_t */
 #include <unistd.h>   /* for sbrk, sysconf */
+#include <stdalign.h>  /* for alignof, max_align_t */
 #include "malloc.h"
 
-#define DEFAULT_PAGE 4096
+# define ALIGNMENT sizeof(max_align_t)	/* alignment boundary */
 
 static void   *region_base;		/* start of reserved bump region */
 static size_t  region_size;		/* size of each block (header+payload) */
@@ -23,22 +24,18 @@ void *naive_malloc(size_t size)
 	void			*prev_end;		/* previous end of allocated region */
 	void			*ptr;			/* pointer to payload */
 	size_t			aligned_size;	/* aligned size */
-	long			pg;				/* system page size */
 
 	if (size == 0)					/* check for zero size */
 		return (NULL);
 
-	pg = sysconf(_SC_PAGESIZE);		/* figure out page size */
-	if (pg <= 0)					/* if error, use default */
-		pg = DEFAULT_PAGE;
-
-    /* round up requested + header to a page boundary */
-	aligned_size = (size + sizeof(size_t) + pg - 1) & ~(pg - 1);
+    /* round up requested + header to an alignment boundary */
+	aligned_size = (size + sizeof(size_t) + ALIGNMENT - 1) & ~(ALIGNMENT - 1);
+	/* sync with system page size */
+	region_size = aligned_size;
 
     /* on first call, reserve the bump region */
 	if (region_base == NULL)
 	{
-		region_size = aligned_size;	/* block size */
 		region_base = sbrk(0);		/* current break */
 		if (sbrk(region_size) == (void *)-1)	/* if sbrk fails */
 			return (NULL);
