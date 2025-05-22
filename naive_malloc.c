@@ -42,7 +42,11 @@ void *naive_malloc(size_t size)
 
     /* on first call, reserve the bump region */
 	if (region_base == NULL)
-		region_base = sbrk(0);						/* current break */
+	{
+		region_base = sbrk(0);                     /* current break */
+		if (sbrk(region_reserved) == (void *)-1)   /* extend by page */
+			return (NULL);
+    }
 
     /* carve next block */
 	prev_end = (char *)region_base + region_used;	/* gives end of region */
